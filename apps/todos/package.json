@@ -1,0 +1,17 @@
+{
+  "name": "todos",
+  "scripts": {
+    "dev": "ts-node-dev src/main.ts",
+    "start": "docker build -t grc.io/devops-lab-2/webapi:v1 . && docker run -p 4000:8080 grc.io/devops-lab-2/webapi:v1"
+  },
+  "dependencies": {
+    "@types/koa": "^2.11.0",
+    "@types/koa-router": "^7.4.0",
+    "@types/node": "^13.5.0",
+    "decimal.js": "^10.2.0",
+    "koa": "^2.11.0",
+    "koa-router": "^8.0.6",
+    "ts-node-dev": "^1.0.0-pre.44",
+    "typescript": "^3.7.5"
+  }
+}
