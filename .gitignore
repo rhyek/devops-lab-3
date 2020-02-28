@@ -1,3 +1,6 @@
 node_modules
 k8s-yamls
 dev/data
+tests/data
+.zcompdump
+.zcompdump-ubuntu-5.7.1

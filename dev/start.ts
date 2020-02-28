@@ -17,7 +17,7 @@ function handleErrors(cp: ChildProcess) {
 async function main() {
   try {
     await new Promise(resolve => {
-      const cp = spawn('docker-compose', ['up'], { cwd: path.resolve(__dirname, './') });
+      const cp = spawn('docker-compose', ['up'], { cwd: __dirname });
       cp.stdout.on('data', data => {
         const str: string = data.toString();
         process.stdout.write(str);

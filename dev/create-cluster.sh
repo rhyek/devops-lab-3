@@ -1,5 +1,4 @@
- 
-#!/bin/sh
+ #!/bin/sh
 #
 # Adapted from:
 # https://github.com/kubernetes-sigs/kind/commits/master/site/static/examples/kind-with-registry.sh
@@ -23,6 +22,7 @@ set -o errexit
 # desired cluster name; default is "kind"
 KIND_CLUSTER_NAME="devops-lab-3"
 
+kind delete cluster --name $KIND_CLUSTER_NAME
 # create registry container unless it already exists
 reg_name='kind-registry'
 reg_port='5000'
@@ -62,7 +62,13 @@ for node in $(kind get nodes --name "${KIND_CLUSTER_NAME}"); do
           tilt.dev/registry-from-cluster=registry:${reg_port}
 done
 
-# kubectl create clusterrolebinding add-on-cluster-admin --clusterrole=cluster-admin --serviceaccount=kube-system:default
-# helm repo add kong https://charts.konghq.com
-# helm repo update
-# helm install kong/kong --generate-name --set ingressController.installCRDs=false,proxy.type=NodePort,proxy.http.nodePort=31500,proxy.tls.nodePort=32500
+helm repo add stable https://kubernetes-charts.storage.googleapis.com
+helm repo update
+helm install my-nginx stable/nginx-ingress --version 1.31.0 --set controller.service.nodePorts.http=31500
+
+rm -rf ./dev/k8s-yamls
+rm ~/.pulumi/stacks/apps.local*
+export PULUMI_CONFIG_PASSPHRASE="pass"
+cd ./pulumi/k8s-apps
+pulumi stack init apps.local
+pulumi up -y

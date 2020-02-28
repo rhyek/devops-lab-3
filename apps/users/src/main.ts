@@ -2,6 +2,7 @@ import Koa from 'koa';
 import Router from 'koa-router';
 import bodyParser from 'koa-bodyparser';
 import meRouter from './routers/me';
+import './data';
 
 const app = new Koa();
 app.use(bodyParser());

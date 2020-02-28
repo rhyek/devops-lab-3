@@ -1,11 +1,9 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as k8s from '@pulumi/kubernetes';
+import { defineDeployment, defineDeploymentAndService } from './utils';
+import { k8sProvider, servicePort } from './common';
 
-const ingressObjects: { serviceName: pulumi.Output<string>; path: string }[] = [];
-
-const k8sProvider = new k8s.Provider('render-yaml', {
-  renderYamlToDirectory: '../../dev/k8s-yamls',
-});
+const config = new pulumi.Config();
 
 const nginx = new k8s.helm.v3.Chart(
   'my-nginx',
@@ -16,85 +14,62 @@ const nginx = new k8s.helm.v3.Chart(
   { provider: k8sProvider },
 );
 
-interface DefineServiceOptions {
-  ingressPath?: string;
-  envs?: Record<string, pulumi.Output<string> | string>;
-}
-
-function defineService(name: string, options?: DefineServiceOptions) {
-  const appLabels = { app: name };
-  const deployment = new k8s.apps.v1.Deployment(
-    name,
-    {
-      spec: {
-        selector: { matchLabels: appLabels },
-        replicas: 1,
-        template: {
-          metadata: { labels: appLabels },
-          spec: {
-            containers: [
-              {
-                name,
-                image: `registry:5000/devops-lab-3/${name}:latest`,
-                resources: {
-                  requests: {
-                    memory: '2G',
-                    cpu: '1000m',
-                  },
-                  // limits: {
-                  //   memory: '128Mi',
-                  //   cpu: '500m',
-                  // },
-                },
-                ports: [{ containerPort: 8080 }],
-                env:
-                  options && options.envs
-                    ? Object.entries(options.envs).map(([key, value]) => ({
-                        name: key,
-                        value,
-                      }))
-                    : undefined,
-              },
-            ],
-          },
+const kafkaJob = new k8s.batch.v1.Job(
+  'configure-kafka',
+  {
+    spec: {
+      template: {
+        spec: {
+          containers: [
+            {
+              name: 'configure-kafka',
+              image: `registry:5000/devops-lab-3/configure-kafka`,
+              env: [{ name: 'KAFKA_SCHEMA_REGISTRY', value: config.require('kafkaSchemaRegistry') }],
+            },
+          ],
+          restartPolicy: 'Never',
         },
       },
+      backoffLimit: 1,
     },
-    { provider: k8sProvider },
-  );
-  const service = new k8s.core.v1.Service(
-    name,
-    {
-      metadata: { name },
-      spec: {
-        type: 'ClusterIP',
-        selector: appLabels,
-        ports: [{ port: 8080, targetPort: 8080 }],
-      },
-    },
-    { provider: k8sProvider },
-  );
-  return { service };
-  // if (options) {
-  //   if (options.ingressPath) {
-  //     return {
-  //       serviceName: service.metadata.name,
-  //       path: options.ingressPath,
-  //     };
-  //   }
-  // }
-}
+  },
+  { provider: k8sProvider },
+);
 
-const config = new pulumi.Config();
-
-const servicePort = 8080;
-
-defineService('auth');
-
-const webappService = defineService('webapp', {
+defineDeployment('kafka-to-sql', {
   envs: {
-    REACT_APP_FIREBASE_CONFIG:
-      '{"apiKey":"AIzaSyAsLH4S27uyHCcK8_6GrmbjvuTM8ep_ELE","authDomain":"devops-lab-3-dev.firebaseapp.com","databaseURL":"https://devops-lab-3-dev.firebaseio.com","projectId":"devops-lab-3-dev","storageBucket":"devops-lab-3-dev.appspot.com","messagingSenderId":"512556660535","appId":"1:512556660535:web:a2f1487b046348b8a14cb2"}',
+    DB_URL: config.requireSecret('dbUrl'),
+    CONNECT_BOOTSTRAP_SERVERS: config.require('kafkaBroker'),
+    CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: `http://${config.require('kafkaSchemaRegistry')}`,
+    CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: `http://${config.require('kafkaSchemaRegistry')}`,
+    CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: '1',
+    CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: '1',
+    CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: '1',
+  },
+  resources: {
+    requests: {
+      cpu: '100m',
+      memory: '100M',
+    },
+  },
+  ports: [8083],
+});
+
+defineDeploymentAndService('auth', {
+  envs: {
+    FIREBASE_SERVICE_ACCOUNT_JSON: config.requireSecret('firebaseServiceAccountJson'),
+  },
+  resources: {
+    requests: {
+      cpu: '100m',
+      memory: '100M',
+    },
+  },
+});
+
+const webappService = defineDeploymentAndService('webapp', {
+  envs: {
+    REACT_APP_FIREBASE_CONFIG: config.require('publicFirebaseJson'),
   },
 });
 new k8s.networking.v1beta1.Ingress(
@@ -109,7 +84,7 @@ new k8s.networking.v1beta1.Ingress(
     spec: {
       rules: [
         {
-          host: 'devopslab3',
+          host: config.require('host'),
           http: {
             paths: [{ path: '/(.*)', backend: { serviceName: webappService.service.metadata.name, servicePort } }],
           },
@@ -121,15 +96,18 @@ new k8s.networking.v1beta1.Ingress(
 );
 
 const exposedServices = [
-  { name: 'todos', service: defineService('todos') },
-  {
-    name: 'users',
-    service: defineService('users', {
-      envs: {
-        DB_URL: config.requireSecret('dbUrl'),
-      },
-    }),
-  },
+  defineDeploymentAndService('tasks', {
+    envs: {
+      KAFKA_BROKER: config.require('kafkaBroker'),
+      KAFKA_SCHEMA_REGISTRY: config.require('kafkaSchemaRegistry'),
+    },
+  }),
+  defineDeploymentAndService('users', {
+    envs: {
+      KAFKA_BROKER: config.require('kafkaBroker'),
+      KAFKA_SCHEMA_REGISTRY: config.require('kafkaSchemaRegistry'),
+    },
+  }),
 ];
 
 new k8s.networking.v1beta1.Ingress(
@@ -139,16 +117,18 @@ new k8s.networking.v1beta1.Ingress(
       annotations: {
         'kubernetes.io/ingress.class': 'nginx',
         'nginx.ingress.kubernetes.io/rewrite-target': '/$2',
-        'nginx.ingress.kubernetes.io/auth-url': 'http://auth.default.svc.cluster.local:8080/verify-jwt',
+        'nginx.ingress.kubernetes.io/auth-url': 'http://auth.default.svc.cluster.local/verify-jwt',
+        'nginx.ingress.kubernetes.io/auth-cache-key': '$remote_user$http_authorization',
+        'nginx.ingress.kubernetes.io/auth-response-headers': 'x-user-data',
       },
     },
     spec: {
       rules: [
         {
-          host: 'devopslab3',
+          host: config.require('host'),
           http: {
-            paths: exposedServices.map(({ name, service: { service } }) => ({
-              path: `/${name}(/|$)(.*)`,
+            paths: exposedServices.map(({ name, service }) => ({
+              path: `/api/${name}(/|$)(.*)`,
               backend: {
                 serviceName: service.metadata.name,
                 servicePort,

@@ -4,10 +4,13 @@
     "dev": "ts-node-dev src/main.ts"
   },
   "dependencies": {
+    "@types/http-errors": "^1.6.3",
     "@types/koa": "^2.11.1",
     "@types/koa-bodyparser": "^4.3.0",
     "@types/koa-router": "^7.4.0",
     "@types/node": "^13.7.4",
+    "firebase-admin": "^8.9.2",
+    "http-errors": "^1.7.3",
     "koa": "^2.11.0",
     "koa-bodyparser": "^4.2.1",
     "koa-router": "^8.0.8",
