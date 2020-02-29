@@ -3,6 +3,5 @@
     "ZDOTDIR": "${workspaceFolder}",
     "PROJECT_ROOT": "${workspaceFolder}"
   },
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "editor.detectIndentation": false
+  "typescript.tsdk": "node_modules/typescript/lib"
 }
