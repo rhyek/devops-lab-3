@@ -11,3 +11,12 @@ export interface TaskRecord {
   completed: boolean;
   created_at: string;
 }
+
+export interface TaskDocument {
+  id: string;
+  description: string;
+  ownerId: string;
+  assigneeId: string | null;
+  completed: boolean;
+  createdAt: string;
+}

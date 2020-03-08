@@ -5,7 +5,7 @@ import morgan from 'koa-morgan';
 import { pgDb, save } from './data';
 import { getAuthenticatedUserData } from '../../@shared/auth';
 import { taskPayloadSchema } from '../../@shared/schemas/yup/tasks';
-import { TaskRecord, TaskPayload } from '../../@shared/types/task';
+import { TaskRecord, TaskPayload, TaskDocument } from '../../@shared/types/task';
 
 const app = new Koa();
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
@@ -13,7 +13,7 @@ app.use(bodyParser());
 const router = new Router();
 
 router.get('/', async ctx => {
-  const tasks = (await pgDb.manyOrNone<TaskRecord>('select * from tasks')).map(r => ({
+  const tasks: TaskDocument[] = (await pgDb.manyOrNone<TaskRecord>('select * from tasks')).map(r => ({
     id: r.id,
     description: r.description,
     ownerId: r.owner_id,
