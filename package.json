@@ -3,12 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "create-cluster": "./dev/create-cluster.sh",
-    "dev": "cd dev; ts-node ./start.ts"
+    "create-cluster": "cd ./dev; ./create-cluster.sh",
+    "dev:avro": "chokidar ./scripts/generate-types-from-avro.py ./apps/@shared/schemas/**/*.avsc -c './scripts/generate-types-from-avro.py' --initial",
+    "dev": "cd ./dev; ts-node ./start.ts"
   },
   "keywords": [],
   "author": "Carlos González <carlos.rgn@gmail.com>",
   "devDependencies": {
+    "chokidar-cli": "~2.1.0",
     "lerna": "^3.20.2"
   },
   "dependencies": {

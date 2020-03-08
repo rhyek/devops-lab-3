@@ -33,6 +33,8 @@ if [ "${running}" != 'true' ]; then
     registry:2
 fi
 
+mkdir -p ./data/pv
+
 # create a cluster with the local registry enabled in containerd
 cat <<EOF | kind create cluster --name "${KIND_CLUSTER_NAME}" --config=-
 kind: Cluster
@@ -40,12 +42,15 @@ apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
 - role: control-plane
   extraPortMappings:
-  - containerPort: 31500
-    hostPort: 80
-    protocol: TCP
-  - containerPort: 32500
-    hostPort: 443
-    protocol: TCP
+    - containerPort: 31500
+      hostPort: 80
+      protocol: TCP
+    - containerPort: 32500
+      hostPort: 443
+      protocol: TCP
+  extraMounts:
+    - hostPath: ./data/pv
+      containerPath: /files
 containerdConfigPatches:
 - |-
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."registry:${reg_port}"]
@@ -62,13 +67,33 @@ for node in $(kind get nodes --name "${KIND_CLUSTER_NAME}"); do
           tilt.dev/registry-from-cluster=registry:${reg_port}
 done
 
+rm -rf ./k8s-yamls
+
+export PULUMI_CONFIG_PASSPHRASE="pass"
+
+cd ../pulumi/k8s-general
+rm ~/.pulumi/stacks/general.local* || true
+pulumi stack init general.local
+pulumi up -y
+
 helm repo add stable https://kubernetes-charts.storage.googleapis.com
 helm repo update
-helm install my-nginx stable/nginx-ingress --version 1.31.0 --set controller.service.nodePorts.http=31500
 
-rm -rf ./dev/k8s-yamls
-rm ~/.pulumi/stacks/apps.local*
-export PULUMI_CONFIG_PASSPHRASE="pass"
-cd ./pulumi/k8s-apps
+helm install my-nginx stable/nginx-ingress --version 1.31.0 --set controller.service.nodePorts.http=31500
+helm install my-postgresql stable/postgresql \
+  --set \
+service.type=NodePort,\
+service.nodePort=31600,\
+persistence.existingClaim=$(pulumi stack output pv1ClaimName),\
+volumePermissions.enabled=true,\
+postgresqlPassword=$(pulumi config get pgPassword),\
+postgresqlDatabase=$(pulumi config get pgDatabase)
+# postgresqlExtendedConf.logConnections=on,\
+# postgresqlExtendedConf.logDisconnections=on,\
+# postgresqlExtendedConf.logHostname=on
+# postgresqlUsername=$(pulumi config get pgUsername),\
+
+cd ../k8s-apps
+rm ~/.pulumi/stacks/apps.local* || true
 pulumi stack init apps.local
 pulumi up -y

@@ -34,13 +34,13 @@ while True:
             print("Waited too long!")
             sys.exit(1)
 
-print("Creating Kafka Cdonnect Postgresql Sink")
+print("Creating Kafka Connect Postgresql Sink")
 
 regex = re.compile(r"^postgresql://(?P<user>.+):(?P<pass>.+)@(?P<rest>.+)$")
 m = regex.match(os.environ["DB_URL"])
 
 r = requests.put(
-    "http://{}/connectors/jdbc_sink_postgresql_00/config".format(
+    "http://{}/connectors/jdbc_sink_postgresql_users_00/config".format(
         kafka_connect_host),
     json={
         "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
@@ -53,6 +53,29 @@ r = requests.put(
         "insert.mode": "upsert",
         "pk.mode": "record_value",
         "pk.fields": "id",
+    },
+)
+print(r.status_code)
+r.raise_for_status()
+
+r = requests.put(
+    "http://{}/connectors/jdbc_sink_postgresql_tasks_00/config".format(
+        kafka_connect_host),
+    json={
+        "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+        "tasks.max": '1',
+        "topics": "tasks",
+        "connection.url": "jdbc:postgresql://{}".format(m.group("rest")),
+        "connection.user": m.group("user"),
+        "connection.password": m.group("pass"),
+        "auto.create": "false",
+        "insert.mode": "upsert",
+        "pk.mode": "record_value",
+        "pk.fields": "id",
+
+        "transforms": "RenameField",
+        "transforms.RenameField.type": "org.apache.kafka.connect.transforms.ReplaceField$Value",
+        "transforms.RenameField.renames": "ownerId:owner_id,assigneeId:assignee_id,createdAt:created_at"
     },
 )
 print(r.status_code)

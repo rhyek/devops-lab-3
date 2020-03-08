@@ -3,7 +3,7 @@ import * as k8s from '@pulumi/kubernetes';
 import { k8sProvider, servicePort } from './common';
 
 export interface DefineDeploymentOptions {
-  envs?: Record<string, pulumi.Output<string> | string>;
+  envs?: Record<string, pulumi.Output<any> | string>;
   ports?: number[];
   resources?: {
     requests?: {

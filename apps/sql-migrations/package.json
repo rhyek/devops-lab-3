@@ -1,6 +1,7 @@
 {
   "name": "sql-migrations",
   "dependencies": {
+    "@types/node": "^13.9.0",
     "knex": "^0.20.10",
     "pg": "^7.18.2",
     "ts-node": "^8.6.2",

@@ -1,18 +1,21 @@
-import { UserRecord } from '../../@shared/types/users';
+import { TaskRecord } from '../../@shared/types/task';
 import { makeConnectionPool } from '../../@shared/utils/database';
 
 export const pgDb = makeConnectionPool();
 
-export async function saveUser(userRecord: UserRecord) {
-  const record = await pgDb.one<UserRecord>(
+export async function save(data: Omit<TaskRecord, 'created_at'>) {
+  const record = await pgDb.one<TaskRecord>(
     `
-    insert into users (id, name, email, external_id)
-    values ($<id>, $<name>, $<email>, $<external_id>)
+    insert into tasks (id, description, owner_id, assignee_id, completed)
+    values ($<id>, $<description>, $<owner_id>, $<assignee_id>, $<completed>)
     on conflict (id)
-    do update set name = $<name>, email = $<email>
+    do update set
+      description = $<description>,
+      assignee_id = $<assignee_id>,
+      completed = $<completed>
     returning *;
   `,
-    userRecord,
+    data,
   );
   return record;
 }
@@ -20,7 +23,7 @@ export async function saveUser(userRecord: UserRecord) {
 // const kafkaAvro = new KafkaAvro({
 //   kafkaBroker: process.env.KAFKA_BROKER as string,
 //   schemaRegistry: `http://${process.env.KAFKA_SCHEMA_REGISTRY}`,
-//   topics: ['users'],
+//   topics: ['tasks'],
 // });
 
 // kafkaAvro.init().then(async () => {

@@ -16,18 +16,20 @@ function handleErrors(cp: ChildProcess) {
 
 async function main() {
   try {
-    await new Promise(resolve => {
-      const cp = spawn('docker-compose', ['up'], { cwd: __dirname });
-      cp.stdout.on('data', data => {
-        const str: string = data.toString();
-        process.stdout.write(str);
-        if (str.includes('database system is ready to accept connections')) {
-          console.log('DB is up.');
-          resolve();
-        }
-      });
-      handleErrors(cp);
-    });
+    spawn('docker-compose', ['up'], { cwd: __dirname });
+    // await new Promise(resolve => {
+    //   const cp = spawn('docker-compose', ['up'], { cwd: __dirname });
+    //   cp.stdout.on('data', data => {
+    //     const str: string = data.toString();
+    //     process.stdout.write(str);
+    //     if (str.includes('database system is ready to accept connections')) {
+    //       console.log('DB is up.');
+    //       resolve();
+    //     }
+    //   });
+    //   handleErrors(cp);
+    // });
+    spawn('python3', ['./scripts/generate-types-from-avro.py']);
     const cp = spawn('tilt', ['up', '--hud=false', '--no-browser'], { stdio: 'inherit' });
     handleErrors(cp);
   } catch (error) {

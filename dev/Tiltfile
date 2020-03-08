@@ -4,7 +4,8 @@ def node_app(app_name):
     live_update=[
       sync('../apps/{}'.format(app_name), '/src/{}'.format(app_name)),
       sync('../apps/@shared', '/src/@shared'),
-      run('cd /src/{} && npm i'.format(app_name), trigger='../apps/{}/package-lock.json'.format(app_name))
+      run('cd /src/{} && npm i'.format(app_name), trigger=['../apps/{}/package.json'.format(app_name), '../apps/{}/package-lock.json'.format(app_name)]),
+      run('cd /src/@shared && npm i', trigger=['../apps/@shared/package.json', '../apps/@shared/package-lock.json'])
     ]
   )
 
@@ -12,7 +13,11 @@ apps = ['tasks', 'webapp', 'users', 'auth']
 
 [node_app(app_name) for app_name in apps]
 
-docker_build('registry:5000/devops-lab-3/kafka-to-sql', '../apps/kafka-to-sql')
-docker_build('registry:5000/devops-lab-3/configure-kafka', '../apps/configure-kafka')
+# docker_build('registry:5000/devops-lab-3/kafka-to-sql', '../apps/kafka-to-sql')
+# docker_build('registry:5000/devops-lab-3/configure-kafka', '../apps/configure-kafka')
+docker_build('registry:5000/devops-lab-3/sql-migrations', '../apps/sql-migrations', dockerfile='../apps/sql-migrations/dev.Dockerfile',
+  live_update=[
+    sync('../apps/sql-migrations', '/app')
+  ])
 
 k8s_yaml(listdir('./k8s-yamls', recursive=True))

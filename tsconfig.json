@@ -65,6 +65,7 @@
     "skipLibCheck": true
   },
   "include": [
+    "./apps/@shared",
     "./apps/*/src",
     "./tests"
   ]

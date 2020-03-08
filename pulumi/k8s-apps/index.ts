@@ -3,48 +3,66 @@ import * as k8s from '@pulumi/kubernetes';
 import { defineDeployment, defineDeploymentAndService } from './utils';
 import { k8sProvider, servicePort } from './common';
 
+const general = new pulumi.StackReference('general.local');
+const dbUrl = general.requireOutput('dbUrl');
 const config = new pulumi.Config();
 
-const nginx = new k8s.helm.v3.Chart(
-  'my-nginx',
-  {
-    chart: 'nginx-ingress',
-    fetchOpts: { repo: 'https://kubernetes-charts.storage.googleapis.com' },
-  },
-  { provider: k8sProvider },
-);
+// const nginx = new k8s.helm.v3.Chart(
+//   'my-nginx',
+//   {
+//     chart: 'nginx-ingress',
+//     fetchOpts: { repo: 'https://kubernetes-charts.storage.googleapis.com' },
+//   },
+//   { provider: k8sProvider },
+// );
 
-const kafkaJob = new k8s.batch.v1.Job(
-  'configure-kafka',
-  {
-    spec: {
-      template: {
-        spec: {
-          containers: [
-            {
-              name: 'configure-kafka',
-              image: `registry:5000/devops-lab-3/configure-kafka`,
-              env: [{ name: 'KAFKA_SCHEMA_REGISTRY', value: config.require('kafkaSchemaRegistry') }],
-            },
-          ],
-          restartPolicy: 'Never',
-        },
-      },
-      backoffLimit: 1,
-    },
-  },
-  { provider: k8sProvider },
-);
+// const kafkaJob = new k8s.batch.v1.Job(
+//   'configure-kafka',
+//   {
+//     spec: {
+//       template: {
+//         spec: {
+//           containers: [
+//             {
+//               name: 'configure-kafka',
+//               image: `registry:5000/devops-lab-3/configure-kafka`,
+//               env: [{ name: 'KAFKA_SCHEMA_REGISTRY', value: config.require('kafkaSchemaRegistry') }],
+//             },
+//           ],
+//           restartPolicy: 'Never',
+//         },
+//       },
+//       backoffLimit: 1,
+//     },
+//   },
+//   { provider: k8sProvider },
+// );
 
-defineDeployment('kafka-to-sql', {
+// const sqlMigrationsJob = new k8s.batch.v1.Job(
+//   'sql-migrations',
+//   {
+//     spec: {
+//       template: {
+//         spec: {
+//           containers: [
+//             {
+//               name: 'sql-migrations',
+//               image: `registry:5000/devops-lab-3/sql-migrations`,
+//               env: [{ name: 'DB_URL', value: dbUrl }],
+//             },
+//           ],
+//           restartPolicy: 'Never',
+//         },
+//       },
+//       backoffLimit: 1,
+//     },
+//   },
+//   { provider: k8sProvider },
+// );
+
+defineDeployment('sql-migrations', {
   envs: {
-    DB_URL: config.requireSecret('dbUrl'),
-    CONNECT_BOOTSTRAP_SERVERS: config.require('kafkaBroker'),
-    CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: `http://${config.require('kafkaSchemaRegistry')}`,
-    CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: `http://${config.require('kafkaSchemaRegistry')}`,
-    CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: '1',
-    CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: '1',
-    CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: '1',
+    DB_URL: dbUrl,
   },
   resources: {
     requests: {
@@ -52,8 +70,26 @@ defineDeployment('kafka-to-sql', {
       memory: '100M',
     },
   },
-  ports: [8083],
 });
+
+// defineDeployment('kafka-to-sql', {
+//   envs: {
+//     DB_URL: dbUrl,
+//     CONNECT_BOOTSTRAP_SERVERS: config.require('kafkaBroker'),
+//     CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: `http://${config.require('kafkaSchemaRegistry')}`,
+//     CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: `http://${config.require('kafkaSchemaRegistry')}`,
+//     CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: '1',
+//     CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: '1',
+//     CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: '1',
+//   },
+//   resources: {
+//     requests: {
+//       cpu: '100m',
+//       memory: '100M',
+//     },
+//   },
+//   ports: [8083],
+// });
 
 defineDeploymentAndService('auth', {
   envs: {
@@ -98,12 +134,14 @@ new k8s.networking.v1beta1.Ingress(
 const exposedServices = [
   defineDeploymentAndService('tasks', {
     envs: {
+      DB_URL: dbUrl,
       KAFKA_BROKER: config.require('kafkaBroker'),
       KAFKA_SCHEMA_REGISTRY: config.require('kafkaSchemaRegistry'),
     },
   }),
   defineDeploymentAndService('users', {
     envs: {
+      DB_URL: dbUrl,
       KAFKA_BROKER: config.require('kafkaBroker'),
       KAFKA_SCHEMA_REGISTRY: config.require('kafkaSchemaRegistry'),
     },
