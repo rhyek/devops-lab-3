@@ -43,8 +43,6 @@ export default function Task(props: TaskProps) {
   const { axios } = useAuthenticated();
   const asyncWork = useAsyncWork();
 
-  console.log(task);
-
   return (
     <Formik<TaskPayload>
       initialValues={task}

@@ -6,14 +6,16 @@ def node_app(app_name):
       sync('../apps/@shared', '/src/@shared'),
       run('cd /src/{} && npm i'.format(app_name), trigger=['../apps/{}/package.json'.format(app_name), '../apps/{}/package-lock.json'.format(app_name)]),
       run('cd /src/@shared && npm i', trigger=['../apps/@shared/package.json', '../apps/@shared/package-lock.json'])
-    ]
+    ],
+    entrypoint='npm run dev'
   )
 
-apps = ['tasks', 'webapp', 'users', 'auth']
+apps = ['tasks', 'webapp', 'users', 'auth', 'firestore-tasks-sync']
 
 [node_app(app_name) for app_name in apps]
 
 # docker_build('registry:5000/devops-lab-3/kafka-to-sql', '../apps/kafka-to-sql')
+docker_build('registry:5000/devops-lab-3/sql-source-connector', '../apps/sql-source-connector')
 # docker_build('registry:5000/devops-lab-3/configure-kafka', '../apps/configure-kafka')
 docker_build('registry:5000/devops-lab-3/sql-migrations', '../apps/sql-migrations', dockerfile='../apps/sql-migrations/dev.Dockerfile',
   live_update=[

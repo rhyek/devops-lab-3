@@ -4,7 +4,23 @@ import { defineDeployment, defineDeploymentAndService } from './utils';
 import { k8sProvider, servicePort } from './common';
 
 const general = new pulumi.StackReference('general.local');
-const dbUrl = general.requireOutput('dbUrl');
+const dbHost = general.requireOutput('dbHost');
+const dbPort = general.requireOutput('dbPort').apply((port: number) => port.toString());
+const dbDatabase = general.requireOutput('dbDatabase');
+
+const dbMigrationsUser = general.requireOutput('dbMigrationsUser');
+const dbMigrationsPass = general.requireOutput('dbMigrationsPass');
+
+const dbDebeziumUser = general.requireOutput('dbDebeziumUser');
+const dbDebeziumPass = general.requireOutput('dbDebeziumPass');
+
+const dbServicesUser = general.requireOutput('dbServicesUser');
+const dbServicesPass = general.requireOutput('dbServicesPass');
+
+function dbUrl(user: pulumi.Output<any>, pass: pulumi.Output<any>): pulumi.Output<string> {
+  return pulumi.interpolate`postgresql://${user}:${pass}@${dbHost}:${dbPort}/${dbDatabase}`;
+}
+
 const config = new pulumi.Config();
 
 // const nginx = new k8s.helm.v3.Chart(
@@ -62,7 +78,7 @@ const config = new pulumi.Config();
 
 defineDeployment('sql-migrations', {
   envs: {
-    DB_URL: dbUrl,
+    DB_URL: dbUrl(dbMigrationsUser, dbMigrationsPass),
   },
   resources: {
     requests: {
@@ -90,6 +106,43 @@ defineDeployment('sql-migrations', {
 //   },
 //   ports: [8083],
 // });
+
+defineDeployment('sql-source-connector', {
+  envs: {
+    CONNECT_BOOTSTRAP_SERVERS: config.require('kafkaBroker'),
+    CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: `http://${config.require('kafkaSchemaRegistry')}`,
+    CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: `http://${config.require('kafkaSchemaRegistry')}`,
+    CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: '1',
+    CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: '1',
+    CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: '1',
+    DB_HOST: dbHost,
+    DB_PORT: dbPort,
+    DB_USER: dbDebeziumUser,
+    DB_PASS: dbDebeziumPass,
+    DB_DBNAME: dbDatabase,
+  },
+  resources: {
+    requests: {
+      cpu: '100m',
+      memory: '100M',
+    },
+  },
+  ports: [8083],
+});
+
+defineDeployment('firestore-tasks-sync', {
+  envs: {
+    CONNECT_BOOTSTRAP_SERVERS: config.require('kafkaBroker'),
+    FIREBASE_SERVICE_ACCOUNT_JSON: config.requireSecret('firebaseServiceAccountJson'),
+  },
+  resources: {
+    requests: {
+      cpu: '100m',
+      memory: '100M',
+    },
+  },
+  ports: [8083],
+});
 
 defineDeploymentAndService('auth', {
   envs: {
@@ -134,14 +187,14 @@ new k8s.networking.v1beta1.Ingress(
 const exposedServices = [
   defineDeploymentAndService('tasks', {
     envs: {
-      DB_URL: dbUrl,
+      DB_URL: dbUrl(dbServicesUser, dbServicesPass),
       KAFKA_BROKER: config.require('kafkaBroker'),
       KAFKA_SCHEMA_REGISTRY: config.require('kafkaSchemaRegistry'),
     },
   }),
   defineDeploymentAndService('users', {
     envs: {
-      DB_URL: dbUrl,
+      DB_URL: dbUrl(dbServicesUser, dbServicesPass),
       KAFKA_BROKER: config.require('kafkaBroker'),
       KAFKA_SCHEMA_REGISTRY: config.require('kafkaSchemaRegistry'),
     },

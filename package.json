@@ -5,7 +5,8 @@
   "scripts": {
     "create-cluster": "cd ./dev; ./create-cluster.sh",
     "dev:avro": "chokidar ./scripts/generate-types-from-avro.py ./apps/@shared/schemas/**/*.avsc -c './scripts/generate-types-from-avro.py' --initial",
-    "dev": "cd ./dev; ts-node ./start.ts"
+    "dev": "cd ./dev; ts-node ./start.ts",
+    "cleardb": "sudo rm -rf ./dev/postgres/data/data-root"
   },
   "keywords": [],
   "author": "Carlos González <carlos.rgn@gmail.com>",

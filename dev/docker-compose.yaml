@@ -1,6 +1,20 @@
 version: "3"
-
 services:
+  postgres:
+    container_name: postgres
+    image: postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: devopslab3
+    volumes:
+      - ./postgres/data/data-root:/var/lib/postgresql/data
+      - ./postgres/postgres.conf:/etc/postgresql/postgresql.conf
+      - ./postgres/init-scripts:/docker-entrypoint-initdb.d
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
   kafka:
     container_name: kafka
     image: landoop/fast-data-dev

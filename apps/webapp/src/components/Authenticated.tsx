@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { AxiosInstance } from 'axios';
 import Dashboard from './Dashboard';
 import { useAuth } from '../utils/auth';
+import { DataProvider } from '../utils/data';
 
 interface AuthenticatedContext {
   user: firebase.User;
@@ -23,7 +24,9 @@ export default function Authenticated() {
 
   return (
     <AuthenticatedContext.Provider value={{ user, axios }}>
-      <Dashboard />;
+      <DataProvider>
+        <Dashboard />
+      </DataProvider>
     </AuthenticatedContext.Provider>
   );
 }

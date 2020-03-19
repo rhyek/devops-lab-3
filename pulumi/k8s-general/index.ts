@@ -9,39 +9,51 @@ const config = new pulumi.Config();
 // });
 
 // https://kubernetes.io/docs/tasks/configure-pod-container/configure-persistent-volume-storage/#create-a-persistentvolume
-new k8s.core.v1.PersistentVolume('pv-1', {
-  metadata: {
-    // name: 'pv-1',
-    labels: {
-      type: 'local',
-    },
-  },
-  spec: {
-    storageClassName: 'manual',
-    capacity: {
-      storage: '2Gi',
-    },
-    accessModes: ['ReadWriteOnce'],
-    hostPath: {
-      path: '/files',
-    },
-  },
-});
+// new k8s.core.v1.PersistentVolume('pv-1', {
+//   metadata: {
+//     // name: 'pv-1',
+//     labels: {
+//       type: 'local',
+//     },
+//   },
+//   spec: {
+//     storageClassName: 'manual',
+//     capacity: {
+//       storage: '2Gi',
+//     },
+//     accessModes: ['ReadWriteOnce'],
+//     hostPath: {
+//       path: '/files',
+//     },
+//   },
+// });
 
-const pv1Claim = new k8s.core.v1.PersistentVolumeClaim('pv-1-claim', {
-  spec: {
-    storageClassName: 'manual',
-    accessModes: ['ReadWriteOnce'],
-    resources: {
-      requests: {
-        storage: '1.5Gi',
-      },
-    },
-  },
-});
+// const pv1Claim = new k8s.core.v1.PersistentVolumeClaim('pv-1-claim', {
+//   spec: {
+//     storageClassName: 'manual',
+//     accessModes: ['ReadWriteOnce'],
+//     resources: {
+//       requests: {
+//         storage: '1.5Gi',
+//       },
+//     },
+//   },
+// });
 
-export const pv1ClaimName = pv1Claim.metadata.name;
+// export const pv1ClaimName = pv1Claim.metadata.name;
 
-export const dbUrl = pulumi.interpolate`postgresql://${config.requireSecret('pgUsername')}:${config.requireSecret(
-  'pgPassword',
-)}@my-postgresql.default.svc.cluster.local/${config.require('pgDatabase')}`;
+export const isDev = process.env.isProd !== '1';
+
+export const dbHost = isDev ? config.require('devHost') : config.require('pgHost');
+export const dbPort = isDev ? 5433 : config.require('dbPort');
+
+export const dbDatabase = 'devopslab3';
+
+export const dbMigrationsUser = isDev ? 'postgres' : config.requireSecret('pgMigrationsUser');
+export const dbMigrationsPass = isDev ? 'pass' : config.requireSecret('pgMigrationsPass');
+
+export const dbDebeziumUser = isDev ? 'dbz' : config.requireSecret('pgDbzUser');
+export const dbDebeziumPass = isDev ? 'pass' : config.requireSecret('pgDbzPass');
+
+export const dbServicesUser = isDev ? 'services' : config.requireSecret('pgServicesUser');
+export const dbServicesPass = isDev ? 'pass' : config.requireSecret('pgServicesPass');

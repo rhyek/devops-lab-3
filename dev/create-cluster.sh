@@ -74,20 +74,21 @@ export PULUMI_CONFIG_PASSPHRASE="pass"
 cd ../pulumi/k8s-general
 rm ~/.pulumi/stacks/general.local* || true
 pulumi stack init general.local
+pulumi config set devHost 172.17.0.1
 pulumi up -y
 
 helm repo add stable https://kubernetes-charts.storage.googleapis.com
 helm repo update
 
 helm install my-nginx stable/nginx-ingress --version 1.31.0 --set controller.service.nodePorts.http=31500
-helm install my-postgresql stable/postgresql \
-  --set \
-service.type=NodePort,\
-service.nodePort=31600,\
-persistence.existingClaim=$(pulumi stack output pv1ClaimName),\
-volumePermissions.enabled=true,\
-postgresqlPassword=$(pulumi config get pgPassword),\
-postgresqlDatabase=$(pulumi config get pgDatabase)
+# helm install my-postgresql stable/postgresql \
+#   --set \
+# service.type=NodePort,\
+# service.nodePort=31600,\
+# persistence.existingClaim=$(pulumi stack output pv1ClaimName),\
+# volumePermissions.enabled=true,\
+# postgresqlPassword=$(pulumi config get pgPassword),\
+# postgresqlDatabase=$(pulumi config get pgDatabase)
 # postgresqlExtendedConf.logConnections=on,\
 # postgresqlExtendedConf.logDisconnections=on,\
 # postgresqlExtendedConf.logHostname=on

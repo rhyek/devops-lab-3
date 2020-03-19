@@ -7,13 +7,13 @@ import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import { v4 as uuid } from 'uuid';
-import * as firebase from 'firebase/app';
 import 'firebase/firestore';
 import Title from '../Title';
 import TaskComponent from './Task';
 import { OtherUser } from '../../../../@shared/types/users';
 import { useAuthenticated } from '../Authenticated';
 import { TaskPayload, TaskDocument } from '../../../../@shared/types/task';
+import { useData } from '../../utils/data';
 
 const useStyles = makeStyles(theme => ({
   paper: {
@@ -30,19 +30,16 @@ export default function Tasks() {
   const [error, setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<OtherUser[]>([]);
-  const [tasks, setTasks] = useState<TaskDocument[]>([]);
   const [currentTask, setCurrentTask] = useState<{ isNew: boolean; task: TaskPayload } | null>(null);
   const { axios } = useAuthenticated();
+
+  const { tasks } = useData();
 
   useEffect(() => {
     (async () => {
       try {
-        const [{ data: users }, { data: tasks }] = await Promise.all([
-          axios.get<OtherUser[]>('/api/users'),
-          axios.get<TaskDocument[]>('/api/tasks'),
-        ]);
+        const [{ data: users }] = await Promise.all([axios.get<OtherUser[]>('/api/users')]);
         setUsers(users);
-        setTasks(tasks);
       } catch (error) {
         setError(error);
       } finally {

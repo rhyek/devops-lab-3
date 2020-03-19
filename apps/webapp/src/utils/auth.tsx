@@ -1,5 +1,5 @@
 import React, { useState, useEffect, PropsWithChildren, useContext } from 'react';
-import * as firebase from 'firebase/app';
+import firebase from 'firebase/app';
 import 'firebase/auth';
 import axios, { AxiosInstance } from 'axios';
 
@@ -23,9 +23,16 @@ export function AuthProvider({ children }: PropsWithChildren<{}>) {
       setLoading(true);
       setUser(user);
       if (user) {
-        const idToken = await user.getIdToken();
-        const headerValue = `Bearer ${idToken}`;
-        axios.defaults.headers.authorization = headerValue;
+        axios.interceptors.request.use(
+          async config => {
+            const idToken = await user.getIdToken();
+            config.headers.authorization = `Bearer ${idToken}`;
+            return config;
+          },
+          error => {
+            return Promise.reject(error);
+          },
+        );
         if (loading) {
           await axios.post('/api/users/me/update-profile');
         }

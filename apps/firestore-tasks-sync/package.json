@@ -1,0 +1,19 @@
+{
+  "name": "firestore-tasks-sync",
+  "scripts": {
+    "dev": "ts-node-dev ./src/main.ts",
+    "start": "ts-node ./src/main.ts"
+  },
+  "dependencies": {
+    "@types/change-case-object": "^2.0.0",
+    "@types/node": "^13.9.1",
+    "change-case-object": "^2.0.0",
+    "firebase-admin": "^8.10.0",
+    "kafkajs": "^1.12.0",
+    "ts-node": "^8.6.2",
+    "typescript": "^3.8.3"
+  },
+  "devDependencies": {
+    "ts-node-dev": "^1.0.0-pre.44"
+  }
+}
