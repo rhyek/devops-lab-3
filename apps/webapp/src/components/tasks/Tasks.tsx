@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Paper, makeStyles, Grid, Button, IconButton, CircularProgress } from '@material-ui/core';
-import { Edit, Check } from '@material-ui/icons';
+import { Edit, Check, Delete } from '@material-ui/icons';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -14,6 +14,7 @@ import { OtherUser } from '../../../../@shared/types/users';
 import { useAuthenticated } from '../Authenticated';
 import { TaskPayload, TaskDocument } from '../../../../@shared/types/task';
 import { useData } from '../../utils/data';
+import { useAsyncWork } from '../../utils/async-work';
 
 const useStyles = makeStyles(theme => ({
   paper: {
@@ -32,6 +33,7 @@ export default function Tasks() {
   const [users, setUsers] = useState<OtherUser[]>([]);
   const [currentTask, setCurrentTask] = useState<{ isNew: boolean; task: TaskPayload } | null>(null);
   const { axios } = useAuthenticated();
+  const asyncWork = useAsyncWork();
 
   const { tasks } = useData();
 
@@ -83,6 +85,14 @@ export default function Tasks() {
     });
   }, []);
 
+  const deleteTask = useCallback(async (task: TaskDocument) => {
+    if (confirm('Are you sure?')) {
+      await asyncWork(async () => {
+        await axios.delete(`/api/tasks/${task.id}`);
+      });
+    }
+  }, []);
+
   return (
     <>
       <Grid container spacing={3}>
@@ -114,6 +124,9 @@ export default function Tasks() {
                       <TableCell align="right">
                         <IconButton size="small" onClick={() => editTask(task.task)}>
                           <Edit />
+                        </IconButton>
+                        <IconButton size="small" onClick={() => deleteTask(task.task)}>
+                          <Delete />
                         </IconButton>
                       </TableCell>
                     </TableRow>

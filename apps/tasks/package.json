@@ -5,6 +5,7 @@
     "start": "docker build -t grc.io/devops-lab-3/webapi:v1 . && docker run -p 4000:8080 grc.io/devops-lab-3/webapi:v1"
   },
   "dependencies": {
+    "@types/change-case-object": "^2.0.0",
     "@types/koa": "^2.11.0",
     "@types/koa-bodyparser": "^4.3.0",
     "@types/koa-morgan": "^1.0.4",
@@ -12,6 +13,7 @@
     "@types/node": "^13.5.0",
     "@types/uuid": "^3.4.7",
     "@types/yup": "^0.26.32",
+    "change-case-object": "^2.0.0",
     "decimal.js": "^10.2.0",
     "koa": "^2.11.0",
     "koa-bodyparser": "^4.2.1",

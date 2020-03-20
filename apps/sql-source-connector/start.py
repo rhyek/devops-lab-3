@@ -51,6 +51,7 @@ r = requests.put(
         "database.user": os.environ["DB_USER"],
         "database.password": os.environ["DB_PASS"],
         "database.dbname": os.environ["DB_DBNAME"],
+        "tombstones.on.delete": False
     },
 )
 print(r.status_code)

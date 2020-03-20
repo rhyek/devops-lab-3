@@ -34,6 +34,12 @@ const kafka = new Kafka({
 const topic = 'debezium-pg.public.tasks';
 const consumer = kafka.consumer({ groupId: 'firestore-tasks-sync' });
 
+interface TaskMessage {
+  before: TaskDocument | null;
+  after: TaskDocument | null;
+  op: string;
+}
+
 const run = async () => {
   await consumer.connect();
   await consumer.subscribe({ topic, fromBeginning: true });
@@ -44,21 +50,31 @@ const run = async () => {
         clearInterval(keepaliveHandle);
       }
       setKeepaliveInterval();
+
+      const parsedMessage = JSON.parse(message.value.toString()) as TaskMessage;
+
       console.log('----------');
-      console.log('Offset:', message.offset);
-      console.log(message.value.toString());
+      console.log('offset:', message.offset);
+      console.log(parsedMessage);
       console.log('----------');
 
-      const document = (changeCaseObject.camel(JSON.parse(message.value.toString()).after) as unknown) as TaskDocument;
-      console.log(document);
-
-      await app
-        .firestore()
-        .collection('tasks')
-        .doc(document.id)
-        .set(document);
-
-      console.log("Document sync'd to firestore.");
+      if (parsedMessage.after && ['c', 'u'].includes(parsedMessage.op)) {
+        await app
+          .firestore()
+          .collection('tasks')
+          .doc(parsedMessage.after.id)
+          .set(changeCaseObject.camel(parsedMessage.after));
+        console.log("Document sync'd to firestore.");
+      } else if (parsedMessage.before && parsedMessage.op === 'd') {
+        await app
+          .firestore()
+          .collection('tasks')
+          .doc(parsedMessage.before.id)
+          .delete();
+        console.log('Document deleted from firestore.');
+      } else {
+        console.log('Unknown operation');
+      }
 
       await consumer.commitOffsets([{ topic, partition, offset: (Number(message.offset) + 1).toString() }]);
     },
