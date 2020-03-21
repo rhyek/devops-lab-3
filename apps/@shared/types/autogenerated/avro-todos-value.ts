@@ -1,4 +1,4 @@
-export interface PersistedTask {
+export interface PersistedTodo {
   id: string;
   description: string;
   ownerId: string;

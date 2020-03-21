@@ -130,7 +130,7 @@ defineDeployment('sql-source-connector', {
   ports: [8083],
 });
 
-defineDeployment('firestore-tasks-sync', {
+defineDeployment('firestore-todos-sync', {
   envs: {
     CONNECT_BOOTSTRAP_SERVERS: config.require('kafkaBroker'),
     FIREBASE_SERVICE_ACCOUNT_JSON: config.requireSecret('firebaseServiceAccountJson'),
@@ -185,7 +185,7 @@ new k8s.networking.v1beta1.Ingress(
 );
 
 const exposedServices = [
-  defineDeploymentAndService('tasks', {
+  defineDeploymentAndService('todos', {
     envs: {
       DB_URL: dbUrl(dbServicesUser, dbServicesPass),
       KAFKA_BROKER: config.require('kafkaBroker'),

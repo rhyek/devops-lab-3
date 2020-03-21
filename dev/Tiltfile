@@ -10,7 +10,7 @@ def node_app(app_name):
     entrypoint='npm run dev'
   )
 
-apps = ['tasks', 'webapp', 'users', 'auth', 'firestore-tasks-sync']
+apps = ['todos', 'webapp', 'users', 'auth', 'firestore-todos-sync']
 
 [node_app(app_name) for app_name in apps]
 

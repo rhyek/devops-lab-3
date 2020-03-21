@@ -1,5 +1,5 @@
 import * as yup from 'yup';
-import { taskPayloadSchema } from '../schemas/yup/tasks';
+import { taskPayloadSchema } from '../schemas/yup/todos';
 
 export type TaskPayload = yup.InferType<typeof taskPayloadSchema>;
 

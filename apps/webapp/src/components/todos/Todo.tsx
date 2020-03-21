@@ -16,9 +16,9 @@ import {
   MenuItem,
 } from '@material-ui/core';
 import { Formik, Form } from 'formik';
-import { taskPayloadSchema } from '../../../../@shared/schemas/yup/tasks';
+import { taskPayloadSchema } from '../../../../@shared/schemas/yup/todos';
 import EasyField from '../EasyField';
-import { TaskPayload } from '../../../../@shared/types/task';
+import { TaskPayload } from '../../../../@shared/types/todo';
 import { OtherUser } from '../../../../@shared/types/users';
 import { useAuthenticated } from '../Authenticated';
 import { useAsyncWork } from '../../utils/async-work';
@@ -26,7 +26,7 @@ import { useAsyncWork } from '../../utils/async-work';
 interface TaskProps {
   onClose: () => void;
   isNew: boolean;
-  task: TaskPayload;
+  todo: TaskPayload;
   users: OtherUser[];
 }
 
@@ -37,23 +37,23 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export default function Task(props: TaskProps) {
-  const { onClose: handleClose, isNew, task, users } = props;
+export default function Todo(props: TaskProps) {
+  const { onClose: handleClose, isNew, todo, users } = props;
   const classes = useStyles();
   const { axios } = useAuthenticated();
   const asyncWork = useAsyncWork();
 
   return (
     <Formik<TaskPayload>
-      initialValues={task}
+      initialValues={todo}
       validationSchema={taskPayloadSchema}
       onSubmit={async values => {
         const validated = taskPayloadSchema.validateSync(values);
         await asyncWork(async () => {
           if (isNew) {
-            await axios.post('/api/tasks', validated);
+            await axios.post('/api/todos', validated);
           } else {
-            await axios.patch(`/api/tasks/${task.id}`, validated);
+            await axios.patch(`/api/todos/${todo.id}`, validated);
           }
           handleClose();
         });
@@ -61,7 +61,7 @@ export default function Task(props: TaskProps) {
     >
       {() => (
         <Dialog maxWidth="xs" fullWidth open={true} onClose={handleClose} aria-labelledby="form-dialog-title">
-          <DialogTitle id="form-dialog-title">{isNew ? 'New Task' : 'Edit Task'}</DialogTitle>
+          <DialogTitle id="form-dialog-title">{isNew ? 'New Todo' : 'Edit Todo'}</DialogTitle>
           <Form>
             <DialogContent>
               <Grid container spacing={2}>

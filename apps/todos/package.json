@@ -1,5 +1,5 @@
 {
-  "name": "tasks",
+  "name": "todos",
   "scripts": {
     "dev": "ts-node-dev src/main.ts",
     "start": "docker build -t grc.io/devops-lab-3/webapi:v1 . && docker run -p 4000:8080 grc.io/devops-lab-3/webapi:v1"

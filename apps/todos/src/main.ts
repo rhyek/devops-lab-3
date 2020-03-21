@@ -5,8 +5,8 @@ import morgan from 'koa-morgan';
 import changeCaseObject from 'change-case-object';
 import { pgDb, save } from './data';
 import { getAuthenticatedUserData } from '../../@shared/auth';
-import { taskPayloadSchema } from '../../@shared/schemas/yup/tasks';
-import { TaskRecord, TaskPayload, TaskDocument } from '../../@shared/types/task';
+import { taskPayloadSchema } from '../../@shared/schemas/yup/todos';
+import { TaskRecord, TaskPayload, TaskDocument } from '../../@shared/types/todo';
 
 const app = new Koa();
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
@@ -14,10 +14,10 @@ app.use(bodyParser());
 const router = new Router();
 
 router.get('/', async ctx => {
-  const tasks: TaskDocument[] = (await pgDb.manyOrNone<TaskRecord>('select * from tasks')).map(
+  const todos: TaskDocument[] = (await pgDb.manyOrNone<TaskRecord>('select * from todos')).map(
     changeCaseObject.camel,
   ) as any;
-  ctx.body = tasks;
+  ctx.body = todos;
 });
 
 router.post('/', async ctx => {
@@ -43,7 +43,7 @@ router.patch('/:id', async ctx => {
 });
 
 router.delete('/:id', async ctx => {
-  await pgDb.none('delete from tasks where id = $1', ctx.params.id);
+  await pgDb.none('delete from todos where id = $1', ctx.params.id);
   ctx.body = null;
 });
 

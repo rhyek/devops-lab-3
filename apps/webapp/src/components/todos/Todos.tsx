@@ -9,10 +9,10 @@ import TableRow from '@material-ui/core/TableRow';
 import { v4 as uuid } from 'uuid';
 import 'firebase/firestore';
 import Title from '../Title';
-import TaskComponent from './Task';
+import TaskComponent from './Todo';
 import { OtherUser } from '../../../../@shared/types/users';
 import { useAuthenticated } from '../Authenticated';
-import { TaskPayload, TaskDocument } from '../../../../@shared/types/task';
+import { TaskPayload, TaskDocument } from '../../../../@shared/types/todo';
 import { useData } from '../../utils/data';
 import { useAsyncWork } from '../../utils/async-work';
 
@@ -25,17 +25,17 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export default function Tasks() {
+export default function Todos() {
   const classes = useStyles();
 
   const [error, setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<OtherUser[]>([]);
-  const [currentTask, setCurrentTask] = useState<{ isNew: boolean; task: TaskPayload } | null>(null);
+  const [currentTodo, setCurrentTodo] = useState<{ isNew: boolean; todo: TaskPayload } | null>(null);
   const { axios } = useAuthenticated();
   const asyncWork = useAsyncWork();
 
-  const { tasks } = useData();
+  const { todos } = useData();
 
   useEffect(() => {
     (async () => {
@@ -52,24 +52,24 @@ export default function Tasks() {
 
   const composed = useMemo(
     () =>
-      tasks
+      todos
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
         .map(t => ({
-          task: t,
+          todo: t,
           assignee: t.assigneeId !== null ? users.find(u => u.id === t.assigneeId)?.name : null,
           completed: t.completed ? <Check /> : null,
         })),
-    [users, tasks],
+    [users, todos],
   );
 
-  const closeTask = useCallback(() => {
-    setCurrentTask(null);
+  const closeTodo = useCallback(() => {
+    setCurrentTodo(null);
   }, []);
 
-  const createNewTask = useCallback(() => {
-    setCurrentTask({
+  const createNewTodo = useCallback(() => {
+    setCurrentTodo({
       isNew: true,
-      task: {
+      todo: {
         id: uuid(),
         description: '',
         assigneeId: null,
@@ -78,17 +78,17 @@ export default function Tasks() {
     });
   }, []);
 
-  const editTask = useCallback((task: TaskDocument) => {
-    setCurrentTask({
+  const editTodo = useCallback((todo: TaskDocument) => {
+    setCurrentTodo({
       isNew: false,
-      task,
+      todo,
     });
   }, []);
 
-  const deleteTask = useCallback(async (task: TaskDocument) => {
+  const deleteTodo = useCallback(async (todo: TaskDocument) => {
     if (confirm('Are you sure?')) {
       await asyncWork(async () => {
-        await axios.delete(`/api/tasks/${task.id}`);
+        await axios.delete(`/api/todos/${todo.id}`);
       });
     }
   }, []);
@@ -98,14 +98,14 @@ export default function Tasks() {
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <Paper className={classes.paper}>
-            <Title>Tasks</Title>
+            <Title>Todos</Title>
             {loading ? (
               <Grid container item justify="center">
                 <CircularProgress color="secondary" />
               </Grid>
             ) : error !== null ? (
               <span>An error ocurred while loading data...</span>
-            ) : tasks.length > 0 ? (
+            ) : todos.length > 0 ? (
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -116,16 +116,16 @@ export default function Tasks() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {composed.map(task => (
-                    <TableRow key={task.task.id}>
-                      <TableCell>{task.task.description}</TableCell>
-                      <TableCell>{task.assignee}</TableCell>
-                      <TableCell align="center">{task.completed}</TableCell>
+                  {composed.map(todo => (
+                    <TableRow key={todo.todo.id}>
+                      <TableCell>{todo.todo.description}</TableCell>
+                      <TableCell>{todo.assignee}</TableCell>
+                      <TableCell align="center">{todo.completed}</TableCell>
                       <TableCell align="right">
-                        <IconButton size="small" onClick={() => editTask(task.task)}>
+                        <IconButton size="small" onClick={() => editTodo(todo.todo)}>
                           <Edit />
                         </IconButton>
-                        <IconButton size="small" onClick={() => deleteTask(task.task)}>
+                        <IconButton size="small" onClick={() => deleteTodo(todo.todo)}>
                           <Delete />
                         </IconButton>
                       </TableCell>
@@ -134,21 +134,21 @@ export default function Tasks() {
                 </TableBody>
               </Table>
             ) : (
-              <div>No tasks</div>
+              <div>No todos</div>
             )}
           </Paper>
         </Grid>
         <Grid item xs={12}>
           <Paper className={classes.paper}>
             <Grid container justify="flex-end">
-              <Button variant="contained" color="primary" onClick={createNewTask}>
+              <Button variant="contained" color="primary" onClick={createNewTodo}>
                 New
               </Button>
             </Grid>
           </Paper>
         </Grid>
       </Grid>
-      {currentTask && <TaskComponent onClose={closeTask} users={users} {...currentTask} />}
+      {currentTodo && <TaskComponent onClose={closeTodo} users={users} {...currentTodo} />}
     </>
   );
 }

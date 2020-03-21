@@ -1,7 +1,7 @@
 import { Kafka, logLevel } from 'kafkajs';
 import admin from 'firebase-admin';
 import changeCaseObject from 'change-case-object';
-import { TaskDocument } from '../../@shared/types/task';
+import { TaskDocument } from '../../@shared/types/todo';
 
 const app = admin.initializeApp({
   credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON as string)),
@@ -28,11 +28,11 @@ setKeepaliveInterval();
 const kafka = new Kafka({
   logLevel: logLevel.INFO,
   brokers: (process.env.CONNECT_BOOTSTRAP_SERVERS as string).split(','),
-  clientId: 'firestore-tasks-sync',
+  clientId: 'firestore-todos-sync',
 });
 
-const topic = 'debezium-pg.public.tasks';
-const consumer = kafka.consumer({ groupId: 'firestore-tasks-sync' });
+const topic = 'debezium-pg.public.todos';
+const consumer = kafka.consumer({ groupId: 'firestore-todos-sync' });
 
 interface TaskMessage {
   before: TaskDocument | null;
@@ -58,17 +58,17 @@ const run = async () => {
       console.log(parsedMessage);
       console.log('----------');
 
-      if (parsedMessage.after && ['c', 'u'].includes(parsedMessage.op)) {
+      if (parsedMessage.after && ['c', 'u', 'r'].includes(parsedMessage.op)) {
         await app
           .firestore()
-          .collection('tasks')
+          .collection('todos')
           .doc(parsedMessage.after.id)
           .set(changeCaseObject.camel(parsedMessage.after));
         console.log("Document sync'd to firestore.");
       } else if (parsedMessage.before && parsedMessage.op === 'd') {
         await app
           .firestore()
-          .collection('tasks')
+          .collection('todos')
           .doc(parsedMessage.before.id)
           .delete();
         console.log('Document deleted from firestore.');
@@ -81,7 +81,7 @@ const run = async () => {
   });
 };
 
-run().catch(e => console.error(`[firestore-tasks-sync/consumer] ${e.message}`, e));
+run().catch(e => console.error(`[firestore-todos-sync/consumer] ${e.message}`, e));
 
 const errorTypes = ['unhandledRejection', 'uncaughtException'];
 const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];

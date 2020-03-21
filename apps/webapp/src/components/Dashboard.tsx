@@ -17,7 +17,7 @@ import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import Menu from './Menu';
 import Copyright from './Copyright';
-import Tasks from './tasks/Tasks';
+import Todos from './todos/Todos';
 // import { mainListItems, secondaryListItems } from './listItems';
 // import Chart from './Chart';
 // import Deposits from './Deposits';
@@ -159,11 +159,11 @@ export default function Dashboard() {
         <div className={classes.appBarSpacer} />
         <Container maxWidth="lg" className={classes.container}>
           <Switch>
-            <Route path="/tasks">
-              <Tasks />
+            <Route path="/todos">
+              <Todos />
             </Route>
             <Route>
-              <Redirect to="/tasks" />
+              <Redirect to="/todos" />
             </Route>
           </Switch>
           <Box pt={4}>

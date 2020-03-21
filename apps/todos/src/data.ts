@@ -1,4 +1,4 @@
-import { TaskRecord } from '../../@shared/types/task';
+import { TaskRecord } from '../../@shared/types/todo';
 import { makeConnectionPool } from '../../@shared/utils/database';
 
 export const pgDb = makeConnectionPool();
@@ -6,7 +6,7 @@ export const pgDb = makeConnectionPool();
 export async function save(data: Omit<TaskRecord, 'created_at'>) {
   const record = await pgDb.one<TaskRecord>(
     `
-    insert into tasks (id, description, owner_id, assignee_id, completed)
+    insert into todos (id, description, owner_id, assignee_id, completed)
     values ($<id>, $<description>, $<owner_id>, $<assignee_id>, $<completed>)
     on conflict (id)
     do update set
@@ -23,7 +23,7 @@ export async function save(data: Omit<TaskRecord, 'created_at'>) {
 // const kafkaAvro = new KafkaAvro({
 //   kafkaBroker: process.env.KAFKA_BROKER as string,
 //   schemaRegistry: `http://${process.env.KAFKA_SCHEMA_REGISTRY}`,
-//   topics: ['tasks'],
+//   topics: ['todos'],
 // });
 
 // kafkaAvro.init().then(async () => {

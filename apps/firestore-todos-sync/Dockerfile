@@ -5,11 +5,11 @@ WORKDIR /src/@shared
 COPY ./@shared/package.json ./@shared/package-lock.json ./
 RUN npm install
 
-WORKDIR /src/firestore-tasks-sync
-COPY ./firestore-tasks-sync/package.json ./firestore-tasks-sync/package-lock.json ./
+WORKDIR /src/firestore-todos-sync
+COPY ./firestore-todos-sync/package.json ./firestore-todos-sync/package-lock.json ./
 RUN npm install
 
 COPY @shared /src/@shared
-COPY firestore-tasks-sync /src/firestore-tasks-sync
+COPY firestore-todos-sync /src/firestore-todos-sync
 
 CMD npm run start

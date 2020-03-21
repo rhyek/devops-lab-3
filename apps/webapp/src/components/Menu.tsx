@@ -41,11 +41,11 @@ export default function Menu() {
           </ListItemIcon>
           <ListItemText primary="Dashboard" />
         </ListItemLink> */}
-        <ListItemLink to="/tasks">
+        <ListItemLink to="/todos">
           <ListItemIcon>
             <ShoppingCartIcon />
           </ListItemIcon>
-          <ListItemText primary="Tasks" />
+          <ListItemText primary="Todos" />
         </ListItemLink>
       </List>
       <Divider />

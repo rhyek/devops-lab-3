@@ -8,4 +8,4 @@ alter default privileges in schema public grant all on tables to services;
 alter default privileges in schema public grant all on sequences to services;
 alter default privileges in schema public grant all on functions to services;
 
-create publication debezium_tasks for all tables;
+create publication debezium_todos for all tables;
