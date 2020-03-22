@@ -2,6 +2,7 @@ import * as pulumi from '@pulumi/pulumi';
 import * as k8s from '@pulumi/kubernetes';
 import { defineDeployment, defineDeploymentAndService } from './utils';
 import { k8sProvider, servicePort } from './common';
+import './orleans';
 
 const general = new pulumi.StackReference('general.local');
 const dbHost = general.requireOutput('dbHost');

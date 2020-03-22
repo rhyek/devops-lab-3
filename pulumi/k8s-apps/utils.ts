@@ -5,6 +5,7 @@ import { k8sProvider, servicePort } from './common';
 export interface DefineDeploymentOptions {
   envs?: Record<string, pulumi.Output<any> | string>;
   ports?: number[];
+  serviceAccountName?: pulumi.Output<string>;
   resources?: {
     requests?: {
       cpu: string;
@@ -28,6 +29,7 @@ export function defineDeployment(name: string, options?: DefineDeploymentOptions
         template: {
           metadata: { labels: appLabels },
           spec: {
+            serviceAccountName: options && options.serviceAccountName,
             containers: [
               {
                 name,
@@ -42,7 +44,8 @@ export function defineDeployment(name: string, options?: DefineDeploymentOptions
                   //   cpu: '500m',
                   // },
                 },
-                ports: (options && options.ports && options.ports.map(port => ({ containerPort: port }))) || undefined,
+                ports:
+                  (options && options.ports && options.ports.map((port) => ({ containerPort: port }))) || undefined,
                 env:
                   options && options.envs
                     ? Object.entries(options.envs).map(([key, value]) => ({

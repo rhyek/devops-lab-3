@@ -13,6 +13,7 @@
     "@types/node": "^13.5.0",
     "@types/uuid": "^3.4.7",
     "@types/yup": "^0.26.32",
+    "axios": "^0.19.2",
     "change-case-object": "^2.0.0",
     "decimal.js": "^10.2.0",
     "koa": "^2.11.0",

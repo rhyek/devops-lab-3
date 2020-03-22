@@ -1,5 +1,6 @@
 def node_app(app_name):
-  docker_build('registry:5000/devops-lab-3/{}'.format(app_name), '../apps/', dockerfile='../apps/{}/Dockerfile'.format(app_name),
+  docker_build('registry:5000/devops-lab-3/{}'.format(app_name), '../apps/',
+    dockerfile='../apps/{}/Dockerfile'.format(app_name),
     only=['./{}'.format(app_name), './@shared'],
     live_update=[
       sync('../apps/{}'.format(app_name), '/src/{}'.format(app_name)),
@@ -10,14 +11,25 @@ def node_app(app_name):
     entrypoint='npm run dev'
   )
 
-apps = ['todos', 'webapp', 'users', 'auth', 'firestore-todos-sync']
+node_app_names = ['todos', 'webapp', 'users', 'auth', 'firestore-todos-sync']
 
-[node_app(app_name) for app_name in apps]
+[node_app(app_name) for app_name in node_app_names]
+
+def orleans_app(app_name):
+  docker_build('registry:5000/devops-lab-3/orleans-{}'.format(app_name), '../apps/OrleansService',
+    dockerfile='../apps/OrleansService/{}/dev.Dockerfile'.format(app_name.capitalize()),
+    live_update=[
+      sync('../apps/OrleansService', '/src')
+    ]
+  )
+
+[orleans_app(app_name) for app_name in ['silo', 'client']]
 
 # docker_build('registry:5000/devops-lab-3/kafka-to-sql', '../apps/kafka-to-sql')
 docker_build('registry:5000/devops-lab-3/sql-source-connector', '../apps/sql-source-connector')
 # docker_build('registry:5000/devops-lab-3/configure-kafka', '../apps/configure-kafka')
-docker_build('registry:5000/devops-lab-3/sql-migrations', '../apps/sql-migrations', dockerfile='../apps/sql-migrations/dev.Dockerfile',
+docker_build('registry:5000/devops-lab-3/sql-migrations', '../apps/sql-migrations',
+  dockerfile='../apps/sql-migrations/dev.Dockerfile',
   live_update=[
     sync('../apps/sql-migrations', '/app')
   ])

@@ -67,7 +67,7 @@ export default function Todo(props: TaskProps) {
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <EasyField<TaskPayload> name="description">
-                    {({ field }) => (
+                    {({ field, hasError, error }) => (
                       <TextField
                         multiline
                         rows={3}
@@ -80,6 +80,8 @@ export default function Todo(props: TaskProps) {
                         InputLabelProps={{
                           shrink: true,
                         }}
+                        error={hasError}
+                        helperText={error}
                         {...field}
                       />
                     )}
