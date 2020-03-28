@@ -30,19 +30,9 @@ router.post('/', async (ctx) => {
 });
 
 router.patch('/:id', async (ctx) => {
-  const { data } = await axios.get(`http://orleans-client/todos/${ctx.params.id}`);
-  ctx.body = data;
-  // const userData = getAuthenticatedUserData(ctx);
-  // const input = await taskPayloadSchema.validate(ctx.request.body);
-  // const data: Omit<TaskRecord, 'created_at'> = {
-  //   id: ctx.params.id,
-  //   description: input.description,
-  //   owner_id: userData.id,
-  //   assignee_id: input.assigneeId,
-  //   completed: input.completed,
-  // };
-  // const persisted = await save(data);
-  // ctx.body = persisted;
+  const input = await taskPayloadSchema.validate(ctx.request.body);
+  await axios.patch(`http://orleans-service/todos/${ctx.params.id}`, input);
+  ctx.body = null;
 });
 
 router.delete('/:id', async (ctx) => {

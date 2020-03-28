@@ -1,21 +1,45 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as k8s from '@pulumi/kubernetes';
-import { k8sProvider, servicePort } from './common';
+import { k8sProvider, servicePort, GeneralSecretKey } from './common';
 
 export interface DefineDeploymentOptions {
-  envs?: Record<string, pulumi.Output<any> | string>;
+  replicas?: number;
+  envs?: Record<string, pulumi.Output<string> | string | { secret: pulumi.Output<string>; key: GeneralSecretKey }>;
   ports?: number[];
   serviceAccountName?: pulumi.Output<string>;
   resources?: {
-    requests?: {
-      cpu: string;
-      memory: string;
-    };
+    cpu?: string;
+    memory?: string;
+    // requests?: {
+    //   cpu: string;
+    //   memory: string;
+    // };
   };
+  maxUnavailable?: number | string;
 }
 
 export function getAppLables(name: string) {
   return { app: name };
+}
+
+export function mapEnvs(envs: NonNullable<DefineDeploymentOptions['envs']>) {
+  return Object.entries(envs).map(([key, value]) => {
+    return {
+      name: key,
+      ...(typeof value === 'object' && 'secret' in value
+        ? {
+            valueFrom: {
+              secretKeyRef: {
+                name: value.secret,
+                key: value.key,
+              },
+            },
+          }
+        : {
+            value,
+          }),
+    };
+  });
 }
 
 export function defineDeployment(name: string, options?: DefineDeploymentOptions) {
@@ -24,8 +48,13 @@ export function defineDeployment(name: string, options?: DefineDeploymentOptions
     name,
     {
       spec: {
+        strategy: {
+          rollingUpdate: {
+            maxUnavailable: options?.maxUnavailable,
+          },
+        },
         selector: { matchLabels: appLabels },
-        replicas: 1,
+        replicas: options?.replicas ?? 1,
         template: {
           metadata: { labels: appLabels },
           spec: {
@@ -34,25 +63,15 @@ export function defineDeployment(name: string, options?: DefineDeploymentOptions
               {
                 name,
                 image: `registry:5000/devops-lab-3/${name}:latest`,
-                resources: (options && options.resources) || {
+                resources: {
                   requests: {
-                    memory: '2G',
-                    cpu: '1000m',
+                    cpu: options?.resources?.cpu ?? '1000m',
+                    memory: options?.resources?.memory ?? '2G',
                   },
-                  // limits: {
-                  //   memory: '128Mi',
-                  //   cpu: '500m',
-                  // },
                 },
                 ports:
                   (options && options.ports && options.ports.map((port) => ({ containerPort: port }))) || undefined,
-                env:
-                  options && options.envs
-                    ? Object.entries(options.envs).map(([key, value]) => ({
-                        name: key,
-                        value,
-                      }))
-                    : undefined,
+                env: options && options.envs ? mapEnvs(options.envs) : undefined,
               },
             ],
           },

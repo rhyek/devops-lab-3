@@ -15,15 +15,23 @@ node_app_names = ['todos', 'webapp', 'users', 'auth', 'firestore-todos-sync']
 
 [node_app(app_name) for app_name in node_app_names]
 
-def orleans_app(app_name):
-  docker_build('registry:5000/devops-lab-3/orleans-{}'.format(app_name), '../apps/OrleansService',
-    dockerfile='../apps/OrleansService/{}/dev.Dockerfile'.format(app_name.capitalize()),
-    live_update=[
-      sync('../apps/OrleansService', '/src')
-    ]
-  )
+# def orleans_app(app_name, ignore):
+#   docker_build('registry:5000/devops-lab-3/orleans-{}'.format(app_name), '../apps/OrleansService',
+#     dockerfile='../apps/OrleansService/{}/dev.Dockerfile'.format(app_name.capitalize()),
+#     ignore='./{}'.format(ignore.capitalize()),
+#     live_update=[
+#       sync('../apps/OrleansService', '/src')
+#     ]
+#   )
 
-[orleans_app(app_name) for app_name in ['silo', 'client']]
+# [orleans_app(app_name, ignore) for [app_name, ignore] in [['silo', 'client'], ['client', 'silo']]]
+
+docker_build('registry:5000/devops-lab-3/orleans-service', '../apps/OrleansService',
+  dockerfile='../apps/OrleansService/Silo/dev.Dockerfile',
+  live_update=[
+    sync('../apps/OrleansService', '/app')
+  ]
+)
 
 # docker_build('registry:5000/devops-lab-3/kafka-to-sql', '../apps/kafka-to-sql')
 docker_build('registry:5000/devops-lab-3/sql-source-connector', '../apps/sql-source-connector')

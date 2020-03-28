@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Orleans;
 
-namespace OrleansService.Client {
+namespace OrleansService.Controllers {
   [ApiController]
   [Route("[controller]")]
   public class StatusController : ControllerBase {

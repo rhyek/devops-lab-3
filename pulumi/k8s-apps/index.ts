@@ -1,28 +1,8 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as k8s from '@pulumi/kubernetes';
 import { defineDeployment, defineDeploymentAndService } from './utils';
-import { k8sProvider, servicePort } from './common';
+import { k8sProvider, servicePort, dbHost, dbPort, dbDatabase, config, generalSecrets } from './common';
 import './orleans';
-
-const general = new pulumi.StackReference('general.local');
-const dbHost = general.requireOutput('dbHost');
-const dbPort = general.requireOutput('dbPort').apply((port: number) => port.toString());
-const dbDatabase = general.requireOutput('dbDatabase');
-
-const dbMigrationsUser = general.requireOutput('dbMigrationsUser');
-const dbMigrationsPass = general.requireOutput('dbMigrationsPass');
-
-const dbDebeziumUser = general.requireOutput('dbDebeziumUser');
-const dbDebeziumPass = general.requireOutput('dbDebeziumPass');
-
-const dbServicesUser = general.requireOutput('dbServicesUser');
-const dbServicesPass = general.requireOutput('dbServicesPass');
-
-function dbUrl(user: pulumi.Output<any>, pass: pulumi.Output<any>): pulumi.Output<string> {
-  return pulumi.interpolate`postgresql://${user}:${pass}@${dbHost}:${dbPort}/${dbDatabase}`;
-}
-
-const config = new pulumi.Config();
 
 // const nginx = new k8s.helm.v3.Chart(
 //   'my-nginx',
@@ -79,13 +59,11 @@ const config = new pulumi.Config();
 
 defineDeployment('sql-migrations', {
   envs: {
-    DB_URL: dbUrl(dbMigrationsUser, dbMigrationsPass),
+    DB_URL: { secret: generalSecrets.metadata.name, key: 'migrationsDbUrl' },
   },
   resources: {
-    requests: {
-      cpu: '100m',
-      memory: '100M',
-    },
+    cpu: '100m',
+    memory: '100M',
   },
 });
 
@@ -118,15 +96,19 @@ defineDeployment('sql-source-connector', {
     CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: '1',
     DB_HOST: dbHost,
     DB_PORT: dbPort,
-    DB_USER: dbDebeziumUser,
-    DB_PASS: dbDebeziumPass,
     DB_DBNAME: dbDatabase,
+    DB_USER: {
+      secret: generalSecrets.metadata.name,
+      key: 'dbDebeziumUser',
+    },
+    DB_PASS: {
+      secret: generalSecrets.metadata.name,
+      key: 'dbDebeziumPass',
+    },
   },
   resources: {
-    requests: {
-      cpu: '100m',
-      memory: '100M',
-    },
+    cpu: '100m',
+    memory: '100M',
   },
   ports: [8083],
 });
@@ -134,26 +116,28 @@ defineDeployment('sql-source-connector', {
 defineDeployment('firestore-todos-sync', {
   envs: {
     CONNECT_BOOTSTRAP_SERVERS: config.require('kafkaBroker'),
-    FIREBASE_SERVICE_ACCOUNT_JSON: config.requireSecret('firebaseServiceAccountJson'),
+    FIREBASE_SERVICE_ACCOUNT_JSON: {
+      secret: generalSecrets.metadata.name,
+      key: 'firebaseServiceAccountJson',
+    },
   },
   resources: {
-    requests: {
-      cpu: '100m',
-      memory: '100M',
-    },
+    cpu: '100m',
+    memory: '100M',
   },
   ports: [8083],
 });
 
 defineDeploymentAndService('auth', {
   envs: {
-    FIREBASE_SERVICE_ACCOUNT_JSON: config.requireSecret('firebaseServiceAccountJson'),
+    FIREBASE_SERVICE_ACCOUNT_JSON: {
+      secret: generalSecrets.metadata.name,
+      key: 'firebaseServiceAccountJson',
+    },
   },
   resources: {
-    requests: {
-      cpu: '100m',
-      memory: '100M',
-    },
+    cpu: '100m',
+    memory: '100M',
   },
 });
 
@@ -188,14 +172,14 @@ new k8s.networking.v1beta1.Ingress(
 const exposedServices = [
   defineDeploymentAndService('todos', {
     envs: {
-      DB_URL: dbUrl(dbServicesUser, dbServicesPass),
+      DB_URL: { secret: generalSecrets.metadata.name, key: 'servicesDbUrl' },
       KAFKA_BROKER: config.require('kafkaBroker'),
       KAFKA_SCHEMA_REGISTRY: config.require('kafkaSchemaRegistry'),
     },
   }),
   defineDeploymentAndService('users', {
     envs: {
-      DB_URL: dbUrl(dbServicesUser, dbServicesPass),
+      DB_URL: { secret: generalSecrets.metadata.name, key: 'servicesDbUrl' },
       KAFKA_BROKER: config.require('kafkaBroker'),
       KAFKA_SCHEMA_REGISTRY: config.require('kafkaSchemaRegistry'),
     },

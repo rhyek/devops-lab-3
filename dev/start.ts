@@ -43,15 +43,15 @@ process.on('SIGINT', async () => {
   await new Promise((resolve) => {
     tilt.on('exit', resolve);
   });
-  await Promise.all([
-    new Promise((resolve) => {
-      dockerCompose.on('exit', resolve);
-    }),
-    new Promise((resolve) => {
-      const cp = spawn('tilt', ['down'], { stdio: 'inherit' });
-      cp.on('exit', resolve);
-    }),
-  ]);
+  // await Promise.all([
+  //   new Promise((resolve) => {
+  //     dockerCompose.on('exit', resolve);
+  //   }),
+  //   new Promise((resolve) => {
+  //     const cp = spawn('tilt', ['down'], { stdio: 'inherit' });
+  //     cp.on('exit', resolve);
+  //   }),
+  // ]);
   process.stdout.write('\nBye!\n');
   process.exit(0);
 });

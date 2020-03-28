@@ -4,8 +4,8 @@
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iisExpress": {
-      "applicationUrl": "http://localhost:39565",
-      "sslPort": 44311
+      "applicationUrl": "http://localhost:12608",
+      "sslPort": 44372
     }
   },
   "profiles": {
@@ -17,7 +17,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "Client": {
+    "Silo": {
       "commandName": "Project",
       "launchBrowser": true,
       "launchUrl": "weatherforecast",
