@@ -16,7 +16,7 @@ import { TaskPayload, TaskDocument } from '../../../../@shared/types/todo';
 import { useData } from '../../utils/data';
 import { useAsyncWork } from '../../utils/async-work';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   paper: {
     padding: theme.spacing(2),
   },
@@ -54,9 +54,9 @@ export default function Todos() {
     () =>
       todos
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-        .map(t => ({
+        .map((t) => ({
           todo: t,
-          assignee: t.assigneeId !== null ? users.find(u => u.id === t.assigneeId)?.name : null,
+          assignee: t.assigneeId !== null ? users.find((u) => u.id === t.assigneeId)?.name : null,
           completed: t.completed ? <Check /> : null,
         })),
     [users, todos],
@@ -85,13 +85,17 @@ export default function Todos() {
     });
   }, []);
 
-  const deleteTodo = useCallback(async (todo: TaskDocument) => {
-    if (confirm('Are you sure?')) {
-      await asyncWork(async () => {
-        await axios.delete(`/api/todos/${todo.id}`);
-      });
-    }
-  }, []);
+  const deleteTodo = useCallback(
+    async (todo: TaskDocument) => {
+      // eslint-disable-next-line
+      if (confirm('Are you sure?')) {
+        await asyncWork(async () => {
+          await axios.delete(`/api/todos/${todo.id}`);
+        });
+      }
+    },
+    [asyncWork, axios],
+  );
 
   return (
     <>
@@ -116,7 +120,7 @@ export default function Todos() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {composed.map(todo => (
+                  {composed.map((todo) => (
                     <TableRow key={todo.todo.id}>
                       <TableCell>{todo.todo.description}</TableCell>
                       <TableCell>{todo.assignee}</TableCell>

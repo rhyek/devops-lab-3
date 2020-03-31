@@ -1,17 +1,13 @@
-import Koa from 'koa';
 import Router from 'koa-router';
-import bodyParser from 'koa-bodyparser';
-import morgan from 'koa-morgan';
 import changeCaseObject from 'change-case-object';
 import axios from 'axios';
 import { pgDb, save } from './data';
 import { getAuthenticatedUserData } from '../../@shared/auth';
 import { taskPayloadSchema } from '../../@shared/schemas/yup/todos';
-import { TaskRecord, TaskPayload, TaskDocument } from '../../@shared/types/todo';
+import { TaskRecord, TaskDocument } from '../../@shared/types/todo';
+import { makeKoaApp } from '../../@shared/utils/http';
 
-const app = new Koa();
-app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
-app.use(bodyParser());
+const app = makeKoaApp();
 const router = new Router();
 
 router.get('/', async (ctx) => {

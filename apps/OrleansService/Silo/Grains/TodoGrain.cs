@@ -1,7 +1,9 @@
+using System.Net;
 using System.Threading.Tasks;
 using Dapper;
 using Microsoft.Extensions.Logging;
 using Orleans;
+using OrleansService.Exceptions;
 using OrleansService.Interfaces;
 using OrleansService.Models;
 
@@ -25,6 +27,9 @@ namespace OrleansService.Grains {
       return Task.FromResult(this.record);
     }
     public async Task Patch(TodoRecord newValue) {
+      if (this.record.AssigneeId != null && newValue.AssigneeId != null && this.record.AssigneeId != newValue.AssigneeId) {
+        throw new HttpResponseException(HttpStatusCode.BadRequest, "This todo has already been assigned to someone.");
+      }
       logger.LogInformation(newValue.Description);
       await using(var connection = dbConnectionService.GetConnection()) {
         await connection.OpenAsync();

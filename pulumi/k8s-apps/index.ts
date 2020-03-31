@@ -3,6 +3,8 @@ import * as k8s from '@pulumi/kubernetes';
 import { defineDeployment, defineDeploymentAndService } from './utils';
 import { k8sProvider, servicePort, dbHost, dbPort, dbDatabase, config, generalSecrets } from './common';
 import './orleans';
+import { CustomResource } from '@pulumi/kubernetes/apiextensions';
+import { orleansService } from './orleans';
 
 // const nginx = new k8s.helm.v3.Chart(
 //   'my-nginx',
@@ -169,22 +171,23 @@ new k8s.networking.v1beta1.Ingress(
   { provider: k8sProvider },
 );
 
-const exposedServices = [
-  defineDeploymentAndService('todos', {
-    envs: {
-      DB_URL: { secret: generalSecrets.metadata.name, key: 'servicesDbUrl' },
-      KAFKA_BROKER: config.require('kafkaBroker'),
-      KAFKA_SCHEMA_REGISTRY: config.require('kafkaSchemaRegistry'),
-    },
-  }),
-  defineDeploymentAndService('users', {
-    envs: {
-      DB_URL: { secret: generalSecrets.metadata.name, key: 'servicesDbUrl' },
-      KAFKA_BROKER: config.require('kafkaBroker'),
-      KAFKA_SCHEMA_REGISTRY: config.require('kafkaSchemaRegistry'),
-    },
-  }),
-];
+const todosService = defineDeploymentAndService('todos', {
+  envs: {
+    DB_URL: { secret: generalSecrets.metadata.name, key: 'servicesDbUrl' },
+    KAFKA_BROKER: config.require('kafkaBroker'),
+    KAFKA_SCHEMA_REGISTRY: config.require('kafkaSchemaRegistry'),
+  },
+});
+
+const usersService = defineDeploymentAndService('users', {
+  envs: {
+    DB_URL: { secret: generalSecrets.metadata.name, key: 'servicesDbUrl' },
+    KAFKA_BROKER: config.require('kafkaBroker'),
+    KAFKA_SCHEMA_REGISTRY: config.require('kafkaSchemaRegistry'),
+  },
+});
+
+const exposedServices = [todosService, usersService];
 
 new k8s.networking.v1beta1.Ingress(
   'general-router',
@@ -217,3 +220,27 @@ new k8s.networking.v1beta1.Ingress(
   },
   { provider: k8sProvider },
 );
+
+// new CustomResource('general-router', {
+//   apiVersion: 'k8s.nginx.org/v1',
+//   kind: 'VirtualServer',
+//   spec: {
+//     host: config.require('host'),
+//     upstreams: exposedServices.map(({ name, service }) => ({
+//       name,
+//       service: service.metadata.name,
+//       port: servicePort
+//     })),
+//     routes: exposedServices
+//       .filter(s => ![todosService, orleansService].includes(s))
+//       .map(({ name }) => ({
+//         path: `/api/${name}(/|$)(.*)`,
+//         action: {
+//           pass: name
+//         }
+//       }))
+//       .concat([
+
+//       ])
+//   }
+// }, { provider: k8sProvider })

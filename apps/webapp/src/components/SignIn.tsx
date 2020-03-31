@@ -15,12 +15,12 @@ import Container from '@material-ui/core/Container';
 import { Link as RouterLink } from 'react-router-dom';
 import { Formik, Form } from 'formik';
 import * as yup from 'yup';
-import firebase from 'firebase/app';
 import EasyField from './EasyField';
 import { useAsyncWork } from '../utils/async-work';
 import Copyright from './Copyright';
+import { useAuth } from '../utils/auth';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   paper: {
     marginTop: theme.spacing(8),
     display: 'flex',
@@ -48,6 +48,7 @@ interface Values {
 
 export default function SignIn() {
   const classes = useStyles();
+  const { signIn } = useAuth();
   const asyncWork = useAsyncWork();
 
   return (
@@ -63,25 +64,13 @@ export default function SignIn() {
         <Formik<Values>
           initialValues={{ email: '', password: '', remember: true }}
           validationSchema={yup.object({
-            email: yup
-              .string()
-              .required()
-              .email()
-              .label('This'),
-            password: yup
-              .string()
-              .required()
-              .label('This'),
+            email: yup.string().required().email().label('This'),
+            password: yup.string().required().label('This'),
           })}
-          onSubmit={async values => {
+          onSubmit={async (values) => {
             await asyncWork(async () => {
               const { email, password, remember } = values;
-              await firebase
-                .auth()
-                .setPersistence(
-                  remember ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION,
-                );
-              await firebase.auth().signInWithEmailAndPassword(email, password);
+              await signIn(email, password, remember);
             });
           }}
         >

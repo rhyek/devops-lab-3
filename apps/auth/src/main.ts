@@ -18,7 +18,7 @@ app.use(async (ctx, next) => {
 
 const router = new Router();
 
-router.get('/verify-jwt', async ctx => {
+router.get('/verify-jwt', async (ctx) => {
   const header: string | undefined = ctx.request.headers.authorization;
   if (!header) {
     throw new Unauthorized('Authorization header empty');
@@ -28,6 +28,7 @@ router.get('/verify-jwt', async ctx => {
     throw new Unauthorized('Id token not present in authorization header');
   }
   const { uid, ...rest } = await admin.auth().verifyIdToken(token);
+  console.log(rest);
   const userData: DecodedIdTokenData = {
     id: uid,
     name: (rest as any).name,

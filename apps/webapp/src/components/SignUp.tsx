@@ -18,8 +18,9 @@ import mem from 'mem';
 import EasyField from './EasyField';
 import { useAsyncWork } from '../utils/async-work';
 import Copyright from './Copyright';
+import { useAuth } from '../utils/auth';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   paper: {
     marginTop: theme.spacing(8),
     display: 'flex',
@@ -48,10 +49,7 @@ interface Values {
 
 async function _checkEmailExists(email: string) {
   try {
-    yup
-      .string()
-      .email()
-      .validateSync(email);
+    yup.string().email().validateSync(email);
     const result = await firebase.auth().fetchSignInMethodsForEmail(email);
     if (result.length > 0) {
       return false;
@@ -65,6 +63,7 @@ const checkEmailExists = mem(_checkEmailExists, { maxAge: 600_000 });
 export default function SignUp() {
   const classes = useStyles();
   const asyncWork = useAsyncWork();
+  const { signUp } = useAuth();
 
   return (
     <Container component="main" maxWidth="xs">
@@ -79,35 +78,21 @@ export default function SignUp() {
         <Formik<Values>
           initialValues={{ firstName: '', lastName: '', email: '', password: '' }}
           validationSchema={yup.object<Values>({
-            firstName: yup
-              .string()
-              .required()
-              .label('This'),
-            lastName: yup
-              .string()
-              .required()
-              .label('This'),
+            firstName: yup.string().required().label('This'),
+            lastName: yup.string().required().label('This'),
             email: yup
               .string()
               .required()
               .email()
               .test('email-exists', 'Email address already in use', checkEmailExists)
               .label('This'),
-            password: yup
-              .string()
-              .required()
-              .label('This'),
+            password: yup.string().required().label('This'),
           })}
           onSubmit={async (values, formikHelpers) => {
             await asyncWork(async () => {
+              const { email, password, firstName, lastName } = values;
               try {
-                const created = await firebase.auth().createUserWithEmailAndPassword(values.email, values.password);
-                if (created.user) {
-                  await created.user.updateProfile({ displayName: `${values.firstName} ${values.lastName}` });
-                  return true;
-                } else {
-                  throw new Error('No user');
-                }
+                await signUp(email, password, `${firstName} ${lastName}`);
               } catch (error) {
                 if (error.code === 'auth/email-already-in-use') {
                   formikHelpers.setFieldError('email', 'Email address already in use');

@@ -82,7 +82,7 @@ new ClusterRoleBinding('orleans-write', {
   },
 });
 
-defineDeploymentAndService('orleans-service', {
+export const orleansService = defineDeploymentAndService('orleans-service', {
   resources: {
     cpu: '100m',
     memory: '100M',

@@ -5,7 +5,7 @@ import { UserRecord } from '../../../@shared/types/users';
 
 const meRouter = new Router({ prefix: '/me' });
 
-meRouter.post('/update-profile', async ctx => {
+meRouter.post('/update-profile', async (ctx) => {
   const userData = getAuthenticatedUserData(ctx);
   console.log(userData);
   const newUser: UserRecord = {
