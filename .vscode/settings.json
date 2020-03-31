@@ -1,8 +1,4 @@
 {
-  "terminal.integrated.env.linux": {
-    "ZDOTDIR": "${workspaceFolder}",
-    "PROJECT_ROOT": "${workspaceFolder}"
-  },
   "typescript.tsdk": "node_modules/typescript/lib",
   "csharpfixformat.style.spaces.beforeParenthesis": false,
   "csharpfixformat.style.newline.atEnd": true,
