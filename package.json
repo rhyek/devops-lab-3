@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "create-cluster": "cd ./dev; ./create-cluster.sh",
+    "create-cluster": "PULUMI_CONFIG_PASSPHRASE=pass cd ./dev; ./create-cluster.sh",
     "dev:avro": "chokidar ./scripts/generate-types-from-avro.py ./apps/@shared/schemas/**/*.avsc -c './scripts/generate-types-from-avro.py' --initial",
     "dev": "cd ./dev; ts-node ./start.ts",
     "cleardb": "sudo rm -rf ./dev/postgres/data/data-root"
