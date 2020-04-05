@@ -10,14 +10,14 @@ using OrleansService.Models;
 namespace OrleansService.Grains {
   public class TodoGrain : Grain, ITodoGrain {
     private readonly ILogger logger;
-    private readonly IDbConnectionService dbConnectionService;
+    private readonly IDbConnectionFactory dbConnectionFactory;
     private TodoRecord record;
-    public TodoGrain(ILogger<TodoGrain> logger, IDbConnectionService dbConnectionService) {
+    public TodoGrain(ILogger<TodoGrain> logger, IDbConnectionFactory dbConnectionFactory) {
       this.logger = logger;
-      this.dbConnectionService = dbConnectionService;
+      this.dbConnectionFactory = dbConnectionFactory;
     }
     public override async Task OnActivateAsync() {
-      await using(var connection = dbConnectionService.GetConnection()) {
+      await using(var connection = dbConnectionFactory.CreateConnection()) {
         await connection.OpenAsync();
         var value = await connection.GetAsync<TodoRecord>(this.GetPrimaryKey().ToString());
         this.record = value;
@@ -31,7 +31,7 @@ namespace OrleansService.Grains {
         throw new HttpResponseException(HttpStatusCode.BadRequest, "This todo has already been assigned to someone.");
       }
       logger.LogInformation(newValue.Description);
-      await using(var connection = dbConnectionService.GetConnection()) {
+      await using(var connection = dbConnectionFactory.CreateConnection()) {
         await connection.OpenAsync();
         await connection.UpdateAsync<TodoRecord>(newValue);
       }

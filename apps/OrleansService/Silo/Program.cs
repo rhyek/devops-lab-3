@@ -34,7 +34,7 @@ namespace OrleansService {
             .ConfigureEndpoints(new Random(1).Next(30001, 30100), new Random(1).Next(20001, 20100), listenOnAnyHostAddress : true)
             .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(TodoGrain).Assembly).WithReferences())
             .ConfigureServices(services => {
-              services.AddSingleton<IDbConnectionService, PgConnectionService>();
+              services.AddSingleton<IDbConnectionFactory, PgConnectionFactory>();
             });
         })
         .ConfigureWebHostDefaults(webBuilder => {
